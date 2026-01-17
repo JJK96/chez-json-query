@@ -8,7 +8,8 @@
              json:unique
              ->
              vector-filter
-             debug)
+             debug
+             tree-map)
      (import (rnrs)
              (srfi-180)
              (only (srfi :1) delete-duplicates)
@@ -25,6 +26,17 @@
              vector->list
              (lambda (x) (filter func x))
              list->vector))
+
+     (define (tree-map func)
+         (lambda (tree)
+             (cond
+                ((null? tree)
+                 '())
+                ((vector? tree)
+                 (vector-map (tree-map func) tree))
+                ((list? tree)
+                 (map (tree-map func) tree))
+                (else (func tree)))))
 
      (define (displayln . x)
          (map
@@ -58,13 +70,15 @@
              vector->list
              delete-duplicates
              list->vector))
-         
-     (define arithmetic-mapping
-         `((= . ,equal?)
-           (!= . ,(lambda args (not (apply equal? args))))))
 
-     (define (arithmetic? func)
-         (assq func arithmetic-mapping))
+     (define (execute-procedures tree node)
+         ; Execute all procedures found anywhere within the node
+        ((tree-map 
+            (lambda (obj) 
+                (if (procedure? obj)
+                    (obj node)
+                    obj)))
+         tree))
 
      (define (interpret-function-rule rule)
          (if (procedure? rule) rule
@@ -74,17 +88,11 @@
                 ((eq? func '*)
                  ;input is a vector of nodes instead of just a single node
                  (lambda (nodes) (vector-map (json:query args) nodes)))
-                ((arithmetic? func)
-                 (lambda (node) (apply (cdr (assq func arithmetic-mapping))
-                                       (map
-                                         (lambda (arg) (if (procedure? arg)
-                                                           (arg node)
-                                                           arg))
-                                         args))))
                 ((eq? func 'filter)
                  (lambda (nodes) (vector-filter (interpret-function-rule (car args))
                                                  nodes)))
-                (else (error 'interpret-function-rule "Incorrect function rule" rule))))))
+                (else
+                 (lambda (node) (eval (execute-procedures rule node))))))))
 
      (define (interpret-rule rule)
         (cond

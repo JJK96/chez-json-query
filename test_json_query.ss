@@ -55,23 +55,23 @@
       (vector '((key . 2))))
 
 (test 'filter-macro
-      ((json:query `("b" (filter (= ,(json:query '("key")) 2))))
+      ((json:query `("b" (filter (eq? ,(json:query '("key")) 2))))
        data)
       (vector '((key . 2))))
 
 (test 'filter-macro-inverted
-      ((json:query `("b" (filter (= 2 ,(json:query '("key"))))))
+      ((json:query `("b" (filter (eq? 2 ,(json:query '("key"))))))
        data)
       (vector '((key . 2))))
 
 (test 'not-equal
-      ((json:query `("b" (filter (!= 2 ,(json:query '("key"))))))
+      ((json:query `("b" (filter (not (eq? 2 ,(json:query '("key")))))))
        data)
       (vector '((key . 1)) '((key . 3)) '((key . 4))))
 
 (test 'equal-values-different-keys
-      ((json:query `("d" (filter (= ,(json:query '("key1")) 
-                                     ,(json:query '("key2"))))))
+      ((json:query `("d" (filter (eq? ,(json:query '("key1"))
+                                      ,(json:query '("key2"))))))
        data)
       (vector '((key1 . 1) (key2 . 1))))
 
