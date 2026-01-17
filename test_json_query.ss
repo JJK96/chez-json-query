@@ -98,3 +98,17 @@
       ((json:query `("a" (replace ((c . ,(json:query '("b")))))))
        data)
       '((c . "res")))
+
+(test 'replace-macro1
+      ((json:query `("d" (replace ((keys1 . ,(json:query '((* "key1"))))
+                                   (keys2 . ,(json:query '((* "key2"))))))))
+       data)
+      '((keys1 . #(1 1)) (keys2 . #(1 2))))
+
+(test 'after-replace
+      ((json:query `("d" (replace ((keys1 . ,(json:query '((* "key1"))))
+                                   (keys2 . ,(json:query '((* "key2"))))))
+                         "keys1"))
+       data)
+      (vector 1 1))
+
