@@ -118,3 +118,9 @@
       ((json:query '("b" 1))
        data)
       '((key . 2)))
+
+(test 'list-ref-multiple
+      ((json:query `("b" (replace #(,(json:query '(0))
+                                    ,(json:query '(1))))))
+       data)
+      '#(((key . 1)) ((key . 2))))
