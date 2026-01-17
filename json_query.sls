@@ -15,12 +15,12 @@
              (only (srfi :1) delete-duplicates)
              (only (chezscheme) format eval vector-append))
 
-     (define-syntax ->
-         (syntax-rules ()
-            ((_ init func ...)
-             (fold-left (lambda (val f) (f val))
-                        init
-                        (list func ...)))))
+     (define (-> init . funcs)
+         (fold-left 
+                (lambda (val f) (f val))
+                init 
+                funcs))
+
      (define (vector-filter func v)
          (-> v
              vector->list
@@ -111,11 +111,7 @@
             (else (error 'inperpret-rule "Incorrect rule" rule))))
          
      (define (json:query rules)
-         (let ((rules (map interpret-rule rules)))
-             (lambda (node)
-                 (fold-left
-                    (lambda (node rule) (rule node))
-                    node
-                    rules))))
+         (lambda (node) 
+            (apply -> node (map interpret-rule rules))))
          
 )
