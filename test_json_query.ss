@@ -31,60 +31,60 @@
 (test 'procedure
       ((json:query `("a" ,json:keys))
        data)
-      (vector 'b))
+      '#(b))
 
 (test 'procedure-remapped
       ((json:query '("a" keys))
        data)
-      (vector 'b))
+      '#(b))
 
 (test 'procedure-remapped2
       ((json:query '("a" values))
        data)
-      (vector "res"))
+      '#("res"))
 
 (test 'node-list
       ((json:query '("b" (* "key")))
        data)
-      (vector 1 2 3 4))
+      '#(1 2 3 4))
 
 (test 'filter-explicit
       ((json:query `("b" ,(lambda (nodes) (vector-filter (lambda (node) (eq? ((json:ref 'key) node) 2))
                                                          nodes))))
        data)
-      (vector '((key . 2))))
+      '#(((key . 2))))
 
 (test 'filter-macro
       ((json:query `("b" (filter ,(lambda (node) (eq? ((json:ref 'key) node)
                                                      2)))))
        data)
-      (vector '((key . 2))))
+      '#(((key . 2))))
 
 (test 'filter-macro-query
       ((json:query `("b" (filter (eq? ,(json:query '("key")) 2))))
        data)
-      (vector '((key . 2))))
+      '#(((key . 2))))
 
 (test 'filter-macro-inverted
       ((json:query `("b" (filter (eq? 2 ,(json:query '("key"))))))
        data)
-      (vector '((key . 2))))
+      '#(((key . 2))))
 
 (test 'not-equal
       ((json:query `("b" (filter (not (eq? 2 ,(json:query '("key")))))))
        data)
-      (vector '((key . 1)) '((key . 3)) '((key . 4))))
+      '#(((key . 1)) ((key . 3)) ((key . 4))))
 
 (test 'equal-values-different-keys
       ((json:query `("d" (filter (eq? ,(json:query '("key1"))
                                       ,(json:query '("key2"))))))
        data)
-      (vector '((key1 . 1) (key2 . 1))))
+      '#(((key1 . 1) (key2 . 1))))
 
 (test 'flatten
       ((json:query `("c" (* "d") flatten))
        data)
-      (vector 1 2 3 4 5 6 7 8))
+      '#(1 2 3 4 5 6 7 8))
 
 (test 'for-each+flatten
       ((json:query `("c" (*_ "d")))
@@ -94,7 +94,7 @@
 (test 'unique
       ((json:query '("c" (* keys) flatten unique))
        data)
-      (vector 'd))
+      '#(d))
 
 (test 'replace
       ((json:query '("a" (replace ((c . "res")))))
@@ -117,14 +117,14 @@
                                    (keys2 . ,(json:query '((* "key2"))))))
                          "keys1"))
        data)
-      (vector 1 1))
+      '#(1 1))
 
-(test 'list-ref
+(test 'vector-ref
       ((json:query '("b" 1))
        data)
       '((key . 2)))
 
-(test 'list-ref-multiple
+(test 'vector-ref-multiple
       ((json:query `("b" (replace #(,(json:query '(0))
                                     ,(json:query '(1))))))
        data)
