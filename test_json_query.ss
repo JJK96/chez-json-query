@@ -86,6 +86,11 @@
        data)
       (vector 1 2 3 4 5 6 7 8))
 
+(test 'for-each+flatten
+      ((json:query `("c" (*_ "d")))
+       data)
+      '#(1 2 3 4 5 6 7 8))
+
 (test 'unique
       ((json:query '("c" (* keys) flatten unique))
        data)

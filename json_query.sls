@@ -76,8 +76,16 @@
                (args (cdr rule)))
              (cond
                 ((eq? func '*)
-                 ;input is a vector of nodes instead of just a single node
+                 ;for-each: Execute for each value in vector.
+                 ;Input is a vector of nodes instead of just a single node
                  (lambda (nodes) (vector-map (json:query args) nodes)))
+
+                ((eq? func '*_)
+                 ;for-each+flatten Execute for each value in vector, then flatten.
+                 (lambda (nodes) 
+                     (-> nodes
+                         (interpret-function-rule `(* ,@args))
+                         json:flatten)))
                 ((eq? func 'filter)
                  (lambda (nodes) 
                      (vector-filter 
