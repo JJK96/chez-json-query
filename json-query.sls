@@ -1,5 +1,4 @@
 #!r6rs
-(load "./util.sls")
 (library (json-query) 
      (export json:query
              json:ref
@@ -7,11 +6,12 @@
              json:values
              json:flatten
              json:unique
-             json:replace)
+             json:replace
+             json:write)
      (import (rnrs)
              (srfi-180)
              (only (srfi :1) delete-duplicates)
-             (only (chezscheme) format eval vector-append)
+             (only (chezscheme) format eval vector-append with-output-to-string)
              (util))
 
      (define (tree-map func)
@@ -53,6 +53,10 @@
 
      (define (json:replace new-node)
          (lambda (node) new-node))
+
+     (define (json:write node)
+         (with-output-to-string 
+             (lambda () (json-write node))))
 
      (define (execute-procedures tree node)
          ; Execute all procedures found anywhere within the node
