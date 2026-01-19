@@ -1,3 +1,4 @@
 jq
 *.import.scm
 *.so
+*.link

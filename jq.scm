@@ -1,4 +1,5 @@
 ; Command-line program as an alternative to jqlang.org
+(declare (uses json-query))
 (import json-query
         srfi-180
         (chicken base)

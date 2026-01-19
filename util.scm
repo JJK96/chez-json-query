@@ -1,3 +1,4 @@
+(declare (unit util))
 (module (util) (->
                 vector-filter
                 vector-map)
