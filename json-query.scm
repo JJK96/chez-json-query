@@ -8,6 +8,7 @@
                       json:flatten
                       json:unique
                       json:replace
+                      json:filter
                       json:write)
      (import scheme
              (chicken port)
@@ -16,7 +17,7 @@
              (chicken module)
              (only srfi-180 json-write)
              (only vector-lib vector-map vector-append)
-             (only srfi-1 delete-duplicates)
+             (only srfi-1 delete-duplicates filter)
              util)
 
     (define env (interaction-environment))
@@ -39,7 +40,18 @@
 
      (define (json:flatten nodes)
          (apply vector-append (vector->list nodes)))
-         
+
+     (define (json:filter func)
+        (lambda (nodes)
+            ; List of nodes or list of key-value entries
+            (cond
+                ((vector? nodes)
+                 (vector-filter func nodes))
+                ((list? nodes)
+                 (filter func nodes))
+                (else (error 'json:filter "Can only filter vector or node" nodes)))
+        ))
+
      (define (json:unique nodes)
          (-> nodes
              vector->list
@@ -86,13 +98,13 @@
                          (interpret-function-rule `(* ,@args))
                          json:flatten)))
                 ((eq? func 'filter)
-                 (lambda (nodes) 
-                     (vector-filter 
-                          (lambda (node)
-                            (eval (execute-procedures (car args)
-                                                      node)
-                                  env))
-                          nodes)))
+                 ; We make this a separate branch because we need to evaluate the first argument 
+                 ; in order to execute it as a function
+                 (json:filter
+                     (lambda (node)
+                        (eval (execute-procedures (car args)
+                                                  node)
+                              env))))
                 (else
                  ; For replace
                  (lambda (node) ((apply (to-json-function func)
