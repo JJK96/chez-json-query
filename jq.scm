@@ -1,18 +1,43 @@
 ; Command-line program as an alternative to jqlang.org
 ; Uncomment for static compilation
-; (declare (uses json-query))
 (import json-query
         srfi-180
+        srfi-13
+        (except scheme =)
         (chicken base)
         (chicken port)
         (chicken pretty-print)
         (chicken eval)
         (only srfi-193 command-line))
 
-(eval '(import json-query 
-               srfi-1) 
+(eval '(import (except scheme =)
+               json-query 
+               srfi-1
+               srfi-13) 
    (interaction-environment))
-(define jq json:query)
+
+(eval '(define-syntax =
+        (syntax-rules ()
+            ((= first arg ... )
+             (cond
+                 ((string? first)
+                  (string=? first arg ...))
+                 (else (eq? first arg ...))))))
+    (interaction-environment))
+
+(eval '(define-syntax jq
+            (syntax-rules ()
+                ((jq arg)
+                 (if (list? arg)
+                     (json:query arg)
+                     (json:query (list arg))))
+                ((jq arg ...)
+                 (json:query (list arg ...)))))
+    (interaction-environment))
+
+; Functions for use in queries
+(define prefix string-prefix?)
+(define contains string-contains)
 
 (define-record args filter input)
 
