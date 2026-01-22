@@ -40,6 +40,16 @@
                  (json:query (list arg ...)))))
     (interaction-environment))
 
+(eval '(define-syntax je
+            (syntax-rules ()
+                ((je arg)
+                 (if (list? arg)
+                     (json:edit arg)
+                     (json:edit (list arg))))
+                ((je arg ...)
+                 (json:edit (list arg ...)))))
+    (interaction-environment))
+
 (eval '(define-syntax accessor
             (syntax-rules ()
                 ((accessor arg ...)
