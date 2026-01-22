@@ -2,7 +2,7 @@
 
 A query library for JSON code, based on SRFI-180, implemented for Chicken Scheme.
 
-See the [chicken branch](https://github.com/JJK96/chez-json-query/tree/chicken) for a Chicken port.
+See the [chez branch](https://github.com/JJK96/scheme-json-query/tree/chez) for a partial Chez port.
 
 This library takes inspiration from [SXPath](https://metapaper.net/query/sxpath/) and [json-tools](https://github.com/ktakashi/json-tools/).
 
