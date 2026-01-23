@@ -1,6 +1,7 @@
 ; Uncomment for static compilation
 ;(declare (unit json-query))
 ;(declare (uses util))
+(load "./util.scm")
 (module (json-query) (json:query
                       json:ref
                       json:keys
@@ -13,12 +14,13 @@
                       json:edit
                       set-result)
      (import scheme
+             (matchable)
              (chicken port)
              (chicken base)
              (chicken eval)
              (chicken module)
              (only srfi-180 json-write)
-             (only vector-lib vector-map vector-append vector-copy)
+             (only vector-lib vector-append vector-copy)
              (only srfi-1 delete-duplicates filter)
              util)
 
@@ -34,8 +36,8 @@
              (map (lambda (entry)
                      (let ((k (car entry))
                            (v (cdr entry))
-                           (key (if (string? key) 
-                                    (string->symbol key) 
+                           (key (if (string? key)
+                                    (string->symbol key)
                                     key)))
                      (if (eq? key k)
                          (cons k (json:traverse* v next-rules))
@@ -53,13 +55,14 @@
              (json:ref (string->symbol key)))
             ((number? key)
              (lambda (nodes) (vector-ref nodes key)))
-            (else
+            ((symbol? key)
                 (lambda (node)
-                     (cdr (assq key node))))))  
-     
+                     (cdr (assq key node))))
+            (else (error 'json:ref "Key must be string, number or symbol" key))))
+
      (define (json:keys node)
          (list->vector (map car node)))
-         
+
      (define (json:values node)
          (list->vector (map cdr node)))
 
@@ -87,30 +90,36 @@
          (lambda (node) new-node))
 
      (define (json:write node)
-         (with-output-to-string 
+         (with-output-to-string
              (lambda () (json-write node (indent-accumulator json-accumulator "  ")))))
 
      (define (execute-procedures tree node)
          ; Execute all procedures found anywhere within the node
-        ((tree-map 
-            (lambda (obj) 
+        ((tree-map
+            (lambda (obj)
                 (if (procedure? obj)
                     (obj node)
                     obj)))
          tree))
 
+     (define json-functions
+       `((keys    . ,json:keys)
+         (values  . ,json:values)
+         (flatten . ,json:flatten)
+         (unique  . ,json:unique)
+         (replace . ,json:replace)
+         (filter  . ,json:filter)
+         (write   . ,json:write)))
+
      (define (to-json-function func)
-        (-> func
-            symbol->string
-            (lambda (x) (string-append "json:" x))
-            string->symbol
-            (lambda (x) (eval x env))))
+       (let ((entry (assq func json-functions)))
+         (if entry
+             (cdr entry)
+             (error 'to-json-function "Unknown function" func))))
 
      (define (json:traverse:function node rule next-rules)
-         (let ((func (car rule))
-               (args (cdr rule)))
-             (cond
-                ((eq? func '*)
+             (match rule
+                (('* . args)
                  ;for-each: Execute for each value in vector.
                  ;Input is a vector of nodes instead of just a single node
                  (json:traverse*
@@ -118,29 +127,30 @@
                         (lambda (n) (json:traverse n args))
                         node)
                     next-rules))
-                ((eq? func '*_)
+                (('*_ . args)
                  ;for-each+flatten Execute for each value in vector, then flatten.
                  (json:traverse:function
                     node
                     `(* ,@args)
                     (cons json:flatten next-rules)))
-                ((eq? func 'filter)
-                 ; We make this a separate branch because we need to evaluate the first argument 
+                (('filter pred)
+                 ; We make this a separate branch because we need to evaluate the first argument
                  ; in order to execute it as a function
-                 (json:traverse* 
+                 (json:traverse*
                       ((json:filter
                           (lambda (n)
                             ; First execute all procedures in the arguments on the given node (e.g. (json:query ...))
-                            (let ((condition-syntax (execute-procedures (car args) n)))
+                            (let ((condition-syntax (execute-procedures pred n)))
                              (eval condition-syntax env))))
                           node)
                       next-rules))
-                (else (let ((func (apply (to-json-function func)
-                                         (execute-procedures args node))))
-                        (json:traverse* (func node) next-rules))))))
+                ((func . args)
+                 (let ((func (apply (to-json-function func)
+                                    (execute-procedures args node))))
+                    (json:traverse* (func node) next-rules)))))
 
      (define (json:traverse* node rules)
-        (if (null? rules) 
+        (if (null? rules)
             ; If we are in json:query context overwrite the root object with the current node
             ; Otherwise (in json:edit context) return the current node in-place
             (if (json:querying)
@@ -156,7 +166,7 @@
              (json:traverse* (rule node) next-rules))
             ; e.g. keys, values, write, unique
             ((symbol? rule)
-             (json:traverse* ((to-json-function rule) node) 
+             (json:traverse* ((to-json-function rule) node)
                             next-rules))
             ; e.g. filter, *, *_
             ((list? rule)
@@ -175,10 +185,10 @@
         (lambda (node)
             (parameterize ((json:querying #f))
                 (json:traverse node rules))))
-         
+
      (define (json:query rules)
         (lambda (node)
             (parameterize ((json:querying #t))
                 (json:traverse node rules))))
-         
+
 )

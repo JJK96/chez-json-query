@@ -8,13 +8,14 @@
                 indent-accumulator
                 json-accumulator)
     (import scheme
-            (only srfi-13 string-pad string-for-each)               
+            (chicken base)
+            (only srfi-13 string-pad string-for-each string-concatenate)
             (only srfi-1 filter fold make-list for-each))
 
     (define (-> init . funcs)
-        (fold 
+        (fold
             (lambda (f val) (f val))
-            init 
+            init
             funcs))
 
     (define (ho-vector ho func v)
@@ -51,17 +52,17 @@
           ((list? tree)
            (filter func (map (tree-filter func) tree)))
           (else tree))))
-          
+
     (define (write-unicode-escape ord)
-      (display #\\)             
+      (display #\\)
       (display #\u)
       (-> ord
-          (lambda (c) (number->string c 16))    
+          (lambda (c) (number->string c 16))
           (lambda (s) (string-pad s 4 #\0))
           display))
 
-    (define (write-json-string str)   
-      (display #\")      
+    (define (write-json-string str)
+      (display #\")
       (string-for-each
         (lambda (char)
           (let ((ord (char->integer char)))
@@ -81,8 +82,6 @@
                 (else (write txt))))
 
     (define (indent-accumulator accumulator indent-step)
-      (define (newline)
-        (display "\n"))
       (define scopes '())
       (define last #f)
       (define (push-scope char)
@@ -91,28 +90,27 @@
         (set! scopes (cdr scopes)))
       (define (indent)
         (if (not (eq? last #\:))
-            (display (apply string-append (make-list (length scopes) indent-step)))))
+            (display (string-concatenate (make-list (length scopes) indent-step)))))
       (lambda (txt)
-        (cond
-          ((eq? txt #\{)
-            (if (not (eq? last #\:))
-                (begin
-                  (newline)
-                  (indent)))
+        (case txt
+          ((#\{)
+            (unless (eq? last #\:)
+                (newline)
+                (indent))
             (push-scope txt)
             (accumulator txt)
             (newline))
-          ((eq? txt #\:) (accumulator txt) (display " "))
-          ((eq? txt #\,) (accumulator txt))
-          ((eq? txt #\})
+          ((#\:) (accumulator txt) (display " "))
+          ((#\,) (accumulator txt))
+          ((#\})
             (pop-scope)
             (newline)
             (indent)
             (accumulator txt))
-          ((eq? txt #\[)
+          ((#\[)
             (push-scope txt)
             (accumulator txt))
-          ((eq? txt #\])
+          ((#\])
             (pop-scope)
             (newline)
             (indent)

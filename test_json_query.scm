@@ -1,3 +1,4 @@
+(load "./json-query.scm")
 (import (json-query)
         srfi-34
         (chicken format)
@@ -6,8 +7,8 @@
 (define-syntax test
     (syntax-rules ()
         ((_ name input desired-result)
-         (guard (ex 
-            (else (begin 
+         (guard (ex
+            (else (begin
                (format #t "Exception while executing test ~a" name)
                (raise ex))))
             (let ((result input))
@@ -171,16 +172,16 @@
 
 (test 'json-edit-after-filter
       ((json:edit `("b"
-                   (filter (eq? ,(json:query '("key")) 2)) 
+                   (filter (eq? ,(json:query '("key")) 2))
                    ,(json:query '((*_ values) 0))))
        '((b . #((( key . 1)) ((key . 2)) ((key . 3)) ((key . 4))))))
       '((b . 2)))
 
 (test 'json-edit-after-filter1
-      ((json:edit `("b" 
-                    (filter (eq? ,(json:query '("key")) 2)) 
-                    (*_ values) 
-                    0 
+      ((json:edit `("b"
+                    (filter (eq? ,(json:query '("key")) 2))
+                    (*_ values)
+                    0
                     ,(lambda (x) (+ x 1))))
        '((b . #((( key . 1)) ((key . 2)) ((key . 3)) ((key . 4))))))
       '((b . #(3))))
