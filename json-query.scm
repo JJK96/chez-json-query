@@ -1,7 +1,10 @@
 ; Uncomment for static compilation
-;(declare (unit json-query))
-;(declare (uses util))
-(load "./util.scm")
+(cond-expand
+  (compiling
+    (declare (unit json-query))
+    (declare (uses util)))
+  (else
+    (load "./util.scm")))
 (module (json-query) (json:query
                       json:ref
                       json:keys

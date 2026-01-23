@@ -1,5 +1,7 @@
-; Uncomment for static compilation
-;(declare (unit util))
+(cond-expand
+  (compiling
+    (declare (unit util)))
+  (else))
 (module (util) (->
                 tree-map
                 tree-filter

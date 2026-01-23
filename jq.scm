@@ -1,6 +1,11 @@
 #!/usr/bin/csi -script
 ; Command-line program as an alternative to jqlang.org
-; Uncomment for static compilation
+(cond-expand
+  (compiling
+    (declare (uses util))
+    (declare (uses json-query)))
+  (else
+    (load "./json-query.scm")))
 (import json-query
         srfi-180
         srfi-13
