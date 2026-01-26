@@ -60,7 +60,7 @@
              (lambda (nodes) (vector-ref nodes key)))
             ((symbol? key)
                 (lambda (node)
-                     (cdr (assq key node))))
+                     (alist-ref key node)))
             (else (error 'json:ref "Key must be string, number or symbol" key))))
 
      (define (json:keys node)
@@ -115,10 +115,8 @@
          (write   . ,json:write)))
 
      (define (to-json-function func)
-       (let ((entry (assq func json-functions)))
-         (if entry
-             (cdr entry)
-             (error 'to-json-function "Unknown function" func))))
+        (or (alist-ref func json-functions)
+            (error 'to-json-function "Unknown function" func)))
 
      (define (json:traverse:function node rule next-rules)
              (match rule

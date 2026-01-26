@@ -4,6 +4,7 @@
   (else))
 (module (util) (->
                 tree-map
+                tree-map-lists
                 tree-filter
                 vector-filter
                 vector-map
@@ -23,7 +24,7 @@
     (define (ho-vector ho func v)
         (-> v
              vector->list
-             (lambda (x) (ho func x))
+             (cut ho func <>)
              list->vector))
 
     (define (vector-filter func v)
@@ -44,6 +45,17 @@
                        ((tree-map func) (cdr tree))))
                 (else (func tree)))))
 
+    (define (tree-map-lists func)
+         (lambda (tree)
+             (cond
+                ((null? tree)
+                 '())
+                ((vector? tree)
+                 (vector-map (tree-map-lists func) tree))
+                ((list? tree)
+                 (func (map (tree-map-lists func) tree)))
+                (else tree))))
+
     (define (tree-filter func)
       (lambda (tree)
         (cond
@@ -59,8 +71,8 @@
       (display #\\)
       (display #\u)
       (-> ord
-          (lambda (c) (number->string c 16))
-          (lambda (s) (string-pad s 4 #\0))
+          (cut number->string <> 16)
+          (cut string-pad <> 4 #\0)
           display))
 
     (define (write-json-string str)
